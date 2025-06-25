@@ -20,12 +20,11 @@ spec:
           image: laravel-final/laravel-web:latest
           ports:
             - containerPort: 8080
-            - containerPort: 22
           env:
             - name: DB_CONNECTION
               value: "mysql"
             - name: DB_HOST
-              value: "127.0.0.1"  # both containers are in the same Pod
+              value: "127.0.0.1"  # Valid here due to shared Pod
             - name: DB_PORT
               value: "3306"
             - name: DB_DATABASE
@@ -33,7 +32,10 @@ spec:
             - name: DB_USERNAME
               value: "root"
             - name: DB_PASSWORD
-              value: "1234"
+              value: "1234"  # Use Kubernetes Secret in production
+          volumeMounts:
+            - name: mysql-socket
+              mountPath: /var/run/mysqld
           resources:
             requests:
               cpu: "500m"
@@ -47,7 +49,7 @@ spec:
           image: mysql:8.0
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: "1234"
+              value: "1234"  # Use Kubernetes Secret in production
             - name: MYSQL_DATABASE
               value: "laravel_final"
           ports:
@@ -55,6 +57,8 @@ spec:
           volumeMounts:
             - name: mysql-storage
               mountPath: /var/lib/mysql
+            - name: mysql-socket
+              mountPath: /var/run/mysqld
           resources:
             requests:
               cpu: "500m"
@@ -64,4 +68,6 @@ spec:
               memory: "1Gi"
       volumes:
         - name: mysql-storage
+          emptyDir: {}
+        - name: mysql-socket
           emptyDir: {}
