@@ -1,4 +1,4 @@
-# File: laravel-deployment.yaml
+# File: laravel-mysql-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,36 +16,40 @@ spec:
         app: laravel-mysql
     spec:
       containers:
-        # Web Container
+        # Laravel Web Container
         - name: web
-          image: your-docker-image:tag  # Replace with your built image
+      image: sovichet12/laravel-web:latest
+      imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
             - name: DB_HOST
-              value: "mysql"  # Use DNS name if MySQL is in another Deployment
+              value: "mysql"  # Matches MySQL service name
             - name: DB_DATABASE
-              value: "your-db-name"
+              value: "laravel_final"
             - name: DB_USERNAME
               value: "root"
             - name: DB_PASSWORD
-              value: "your-password"
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: mysql_root_password
           resources:
             requests:
               memory: "256Mi"
               cpu: "100m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
 
-        # MySQL Container
+        # MySQL Database Container
         - name: mysql
           image: mysql:8.0
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: "your-password"
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: mysql_root_password
             - name: MYSQL_DATABASE
-              value: "your-db-name"
+              value: "laravel_final"
           ports:
             - containerPort: 3306
           volumeMounts:
@@ -55,9 +59,6 @@ spec:
             requests:
               memory: "256Mi"
               cpu: "100m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
       volumes:
         - name: mysql-data
           emptyDir: {}
